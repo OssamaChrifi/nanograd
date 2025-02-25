@@ -8,18 +8,12 @@ class Conv2d(Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: Union[int, tuple], **kwargs):
         self.in_channels = in_channels
         self.out_channels = out_channels
-        if isinstance(kernel_size, int):
-            self.weight = Tensor(
-                np.random.randn(out_channels, in_channels, kernel_size, kernel_size) * \
-                    np.sqrt(2. / (in_channels * kernel_size * kernel_size)),
-                requires_grad=True
-            )
-        elif isinstance(kernel_size, tuple):
-            self.weight = Tensor(
-                np.random.randn(out_channels, in_channels, kernel_size[0], kernel_size[1]) * \
-                    np.sqrt(2. / (in_channels * kernel_size[0] * kernel_size[1])),
-                requires_grad=True
-            )
+        self.kernel_size = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
+        self.weight = Tensor(
+            np.random.randn(out_channels, in_channels, *self.kernel_size) * \
+                np.sqrt(2. / in_channels * self.kernel_size[0] * self.kernel_size[1]),
+            requires_grad=True
+        )
         self.bias = Tensor(
             np.zeros(out_channels),
             requires_grad=True
@@ -65,5 +59,6 @@ class Conv2d(Module):
         col = col.reshape(batch_size, out_height * out_width, -1).transpose(0, 2, 1)  
         return col, out_height, out_width
 
+    @property
     def parameters(self):
         return [self.weight, self.bias]
