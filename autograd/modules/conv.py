@@ -8,12 +8,18 @@ class Conv2d(Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: Union[int, tuple], **kwargs):
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.kernel_size = kernel_size if isinstance(kernel_size, int) else kernel_size[0]
-        self.weight = Tensor(
-            np.random.randn(out_channels, in_channels, kernel_size, kernel_size) * \
-                np.sqrt(2. / (in_channels * kernel_size * kernel_size)),
-            requires_grad=True
-        )
+        if isinstance(kernel_size, int):
+            self.weight = Tensor(
+                np.random.randn(out_channels, in_channels, kernel_size, kernel_size) * \
+                    np.sqrt(2. / (in_channels * kernel_size * kernel_size)),
+                requires_grad=True
+            )
+        elif isinstance(kernel_size, tuple):
+            self.weight = Tensor(
+                np.random.randn(out_channels, in_channels, kernel_size[0], kernel_size[1]) * \
+                    np.sqrt(2. / (in_channels * kernel_size[0] * kernel_size[1])),
+                requires_grad=True
+            )
         self.bias = Tensor(
             np.zeros(out_channels),
             requires_grad=True
@@ -29,33 +35,34 @@ class Conv2d(Module):
     
     def _conv2d(self, x: Tensor, weight: Tensor, bias: Tensor, padding: int, stride: int, dilation: int, groups: int):
         batch_size, in_channels, _, _ = x.data.shape
-        out_channels, _, kernel_size, _ = weight.data.shape
+        out_channels, _, kernel_size_h, kernel_size_w = weight.data.shape
         if (in_channels != self.in_channels) or (x.data.ndim != 4):
             raise ValueError(f"Expected input of shape (batch_size, {self.in_channels}, height, width), but got {x.data.shape}")
         if groups != 1:
             raise NotImplementedError("Groups > 1 is not supported yet")
         if self.padding_mode != 'zeros':
             raise NotImplementedError("Padding mode != 'zeros' is not supported yet")
-        x_unf, out_height, out_width = self._im2col(x, kernel_size, stride, padding, dilation)
+        x_unf, out_height, out_width = self._im2col(x, kernel_size_h, kernel_size_w, stride, padding, dilation)
         weight_unf = weight.data.reshape(out_channels, -1)
         out_unf = x_unf.transpose(0,2,1) @ weight_unf.T + bias.data
         out = out_unf.transpose(0,2,1).reshape(batch_size, out_channels, out_height, out_width)
         return Tensor(out)
     
-    def _im2col(self, x: Tensor, kernel_size: int, stride: int, padding: int, dilation: int):
+    def _im2col(self, x: Tensor, kernel_size_h: int, kernel_size_w: int, stride: int, padding: int, dilation: int):
         batch_size = x.data.shape[0]
         x_padded = np.pad(x.data, ((0,0), (0,0), (padding, padding), (padding, padding)), mode='constant')
 
-        kernel_effective = dilation * (kernel_size - 1) + 1
-        out_height = (x_padded.shape[2] - kernel_effective) // stride + 1
-        out_width = (x_padded.shape[3] - kernel_effective) // stride + 1
+        kernel_effective_h = dilation * (kernel_size_h - 1) + 1
+        kernel_effective_w = dilation * (kernel_size_w - 1) + 1
+        out_height = (x_padded.shape[2] - kernel_effective_h) // stride + 1
+        out_width = (x_padded.shape[3] - kernel_effective_w) // stride + 1
         
-        windows = np.lib.stride_tricks.sliding_window_view(x_padded, (kernel_effective, kernel_effective), axis=(2, 3))
+        windows = np.lib.stride_tricks.sliding_window_view(x_padded, (kernel_effective_h, kernel_effective_w), axis=(2, 3))
         windows = windows[:, :, ::stride, ::stride, :, :]
         windows = windows[:, :, :, :, ::dilation, ::dilation]
 
-        col = windows.transpose(0, 2, 3, 1, 4, 5)  # (batch_size, out_height, out_width, in_channels, kernel_size, kernel_size)
-        col = col.reshape(batch_size, out_height * out_width, -1).transpose(0, 2, 1)  # (batch_size, in_channels*kernel_size*kernel_size, out_height*out_width)
+        col = windows.transpose(0, 2, 3, 1, 4, 5)  
+        col = col.reshape(batch_size, out_height * out_width, -1).transpose(0, 2, 1)  
         return col, out_height, out_width
 
     def parameters(self):
