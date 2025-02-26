@@ -1,7 +1,7 @@
 from .base import Module
 from ..tensor import Tensor
 import numpy as np
-from typing import Union
+from typing import Union, Tuple
 
 
 class Conv2d(Module):
@@ -13,7 +13,7 @@ class Conv2d(Module):
             'circular': ('wrap', {})
         }
     
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: Union[int, tuple], **kwargs):
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: Union[int, Tuple[int, int]], **kwargs: Union[int, str]):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
@@ -32,10 +32,10 @@ class Conv2d(Module):
         self.groups = kwargs.get('groups', 1)
         self.padding_mode = kwargs.get('padding_mode', 'zeros')
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor) -> Tensor:
         return self._conv2d(x, self.weight, self.bias, self.padding, self.stride, self.dilation, self.groups)
     
-    def _conv2d(self, x: Tensor, weight: Tensor, bias: Tensor, padding: int, stride: int, dilation: int, groups: int):
+    def _conv2d(self, x: Tensor, weight: Tensor, bias: Tensor, padding: int, stride: int, dilation: int, groups: int) -> Tensor:
         batch_size, in_channels, _, _ = x.data.shape
         out_channels, _, kernel_size_h, kernel_size_w = weight.data.shape
         if (in_channels != self.in_channels) or (x.data.ndim != 4):
@@ -68,7 +68,7 @@ class Conv2d(Module):
         out = np.concatenate(outputs, axis=1)
         return Tensor(out)
     
-    def _im2col(self, x: Tensor, kernel_size_h: int, kernel_size_w: int, stride: int, padding: int, dilation: int):
+    def _im2col(self, x: Tensor, kernel_size_h: int, kernel_size_w: int, stride: int, padding: int, dilation: int) -> Tensor:
         batch_size = x.data.shape[0]
         mode, kwargs = self.PAD_MODES[self.padding_mode]
         x_padded = np.pad(x.data, ((0,0), (0,0), (padding, padding), (padding, padding)), mode=mode, **kwargs)
