@@ -9,7 +9,7 @@ class Tensor:
     """
     def __init__(self, 
                  data : np.ndarray, 
-                 requires_grad : bool = False):
+                 requires_grad : bool = True):
         self.data = data if isinstance(data, np.ndarray) else np.array(data)
         self.grad = np.zeros_like(data, dtype=float) if requires_grad else None
         self.requires_grad = requires_grad

@@ -21,6 +21,7 @@ class Linear(Module):
             raise ValueError(f"Expected input of shape (batch_size, {self.in_features}), but got {x.data.shape}")
         return x @ self.weight + self.bias
     
+    @property
     def parameters(self):
         return [self.weight, self.bias]
     
