@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Optional
 from .functions import Add, Sub, Mul, Div, Pow, MatMul, \
-    Sum, Mean, Exp, Log
+    Sum, Mean, Exp, Log, Conv2d
 
 class Tensor:
     """
@@ -84,6 +84,10 @@ class Tensor:
     
     def log(self) -> 'Tensor':
         return Log.apply(self)
+    
+    def conv2d(self, weight : 'Tensor', bias : 'Tensor', padding : int = 0, stride : int = 1, \
+               dilation : int = 1, groups : int = 1, padding_mode: str = 'zeros') -> 'Tensor':
+        return Conv2d.apply(self, weight, bias, padding, stride, dilation, groups, padding_mode)
 
     def backward(self, grad_output : Optional[np.ndarray] = None) -> None:
         if grad_output is None:

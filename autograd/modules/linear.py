@@ -22,11 +22,6 @@ class Linear(Module):
         self.input = x
         return x @ self.weight + self.bias
     
-    def backward(self, grad_output: np.ndarray):
-        self.weight.grad += self.input.data.T @ grad_output
-        self.bias.grad += grad_output.sum(axis=0)
-        self.input.grad += grad_output @ self.weight.data.T
-    
     @property
     def parameters(self):
         return [self.weight, self.bias]
