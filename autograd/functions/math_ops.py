@@ -8,8 +8,21 @@ class Add(Function):
         return x.data + y.data
     
     def backward(self, grad_output : Optional[np.ndarray]) -> Tuple[np.ndarray, np.ndarray]:
-        return grad_output, grad_output
+        _, y = self.input
+        grad_x = grad_output
+        grad_y = grad_output
+        shape_y = y.data.shape
+        shape_out = grad_output.shape
 
+        if shape_y != shape_out:
+            diff = len(shape_out) - len(shape_y)
+            new_shape_y = (1,) * diff + shape_y
+            axes = tuple(i for i, (dim_out, dim_y) in enumerate(zip(shape_out, new_shape_y)) if dim_y == 1)
+            grad_y = grad_output.sum(axis=axes, keepdims=True)
+            grad_y = grad_y.reshape(shape_y)
+
+        return grad_x, grad_y
+    
 class Sub(Function):
     def forward(self, x, y) -> np.ndarray:
         self.input = (x, y)

@@ -19,7 +19,13 @@ class Linear(Module):
     def forward(self, x: Tensor):
         if x.data.ndim != 2 or x.data.shape[1] != self.in_features:
             raise ValueError(f"Expected input of shape (batch_size, {self.in_features}), but got {x.data.shape}")
+        self.input = x
         return x @ self.weight + self.bias
+    
+    def backward(self, grad_output: np.ndarray):
+        self.weight.grad += self.input.data.T @ grad_output
+        self.bias.grad += grad_output.sum(axis=0)
+        self.input.grad += grad_output @ self.weight.data.T
     
     @property
     def parameters(self):

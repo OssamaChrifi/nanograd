@@ -38,7 +38,7 @@ class Conv2d(Module):
     def backward(self, grad_output: np.ndarray) -> Tensor:
         cols, out_height, out_width = self._im2col(self.x_padded, self.kernel_size[0], self.kernel_size[1], self.stride)
         grad_filters = grad_output.reshape(self.batch_size, self.out_channels, -1) @ cols.T
-        self.filters.grad = grad_filters.reshape(self.filters.shape)
+        self.weight.grad = grad_filters.reshape(self.weight.shape)
         self.bias.grad = grad_output.sum(axis=(0, 2, 3))
         grad_input = grad_output.transpose(1, 0, 2, 3).reshape(self.out_channels, -1) @ self.filters.data.reshape(self.out_channels, -1)
         grad_input = self._col2im(grad_input, self.x.shape, out_height, out_width)
