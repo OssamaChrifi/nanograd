@@ -154,3 +154,44 @@ class Conv2d(Function):
             grad_x_unf[i] = (grad_output_reshaped[i].T @ weight_unf).T
         grad_x = col2im(grad_x_unf, x.data.shape, (k_h, k_w), padding, stride, dilation)
         return grad_x, grad_weight, grad_bias
+    
+class Maxpool2d(Function):
+    def forward(self, x, kernel_size, padding, stride) -> np.ndarray:
+        self.input = x
+        self.ctx = (kernel_size, padding, stride)
+        batch_size, channels, _, _ = x.data.shape
+        k_h, k_w = kernel_size
+        s_h, s_w = stride
+        if padding[0] > 0 or padding[1] > 0:
+            x_padded = np.pad(x.data, ((0,0), (0,0), (padding[0], padding[1]), (padding[0], padding[1])),\
+                            mode='constant', constant_values=0)
+        else:
+            x_padded = x.data
+        self.x_padded = x_padded
+        out_height = (x_padded.shape[2] - k_h) // s_h + 1
+        out_width = (x_padded.shape[3] - k_w) // s_w + 1
+        windows = np.lib.stride_tricks.sliding_window_view(x_padded, (k_h, k_w), axis=(2, 3))
+        windows = windows[:, :, ::s_h, ::s_w, :, :]
+        out = np.max(windows, axis=(-2, -1))
+        return out.reshape(batch_size, channels, out_height, out_width)
+    
+    def backward(self, grad_output) -> np.ndarray:
+        kernel_size, padding, stride = self.ctx
+        k_h, k_w = kernel_size
+        s_h, s_w = stride
+        grad_padded = np.zeros_like(self.x_padded)
+        for i in range(grad_output.shape[2]):  
+            for j in range(grad_output.shape[3]):  
+                x_window = self.x_padded[:, :, i * s_h:i * s_h + k_h, j * s_w:j * s_w + k_w]
+                max_mask = (x_window == np.max(x_window, axis=(-2, -1), keepdims=True))
+                grad_padded[:, :, i * s_h:i * s_h + k_h, j * s_w:j * s_w + k_w] = grad_padded[:, :, i * s_h:i * s_h + k_h, j * s_w:j * s_w + k_w] \
+                    + max_mask * grad_output[:, :, i, j][..., None, None]
+        if padding[0] > 0 or padding[1] > 0:
+            grad_input = grad_padded[:, :, padding[0]:-padding[0], padding[1]:-padding[1]]
+        else:
+            grad_input = grad_padded
+
+        return grad_input
+
+
+        

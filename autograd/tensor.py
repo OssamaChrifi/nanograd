@@ -1,7 +1,7 @@
 import numpy as np
-from typing import Optional
+from typing import Optional, Tuple, Union
 from .functions import Add, Sub, Mul, Div, Pow, MatMul, \
-    Sum, Mean, Exp, Log, Conv2d
+    Sum, Mean, Exp, Log, Conv2d, Maxpool2d
 
 class Tensor:
     """
@@ -88,6 +88,16 @@ class Tensor:
     def conv2d(self, weight : 'Tensor', bias : 'Tensor', padding : int = 0, stride : int = 1, \
                dilation : int = 1, groups : int = 1, padding_mode: str = 'zeros') -> 'Tensor':
         return Conv2d.apply(self, weight, bias, padding, stride, dilation, groups, padding_mode)
+    
+    def maxPool2d(self, kernel_size: Union[Tuple[int, int], int], padding: Union[Tuple[int, int], int] = None, \
+                  stride: Union[Tuple[int, int], int] = (1, 1)) -> 'Tensor':
+        kernel_size = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
+        if isinstance(padding, int):
+            padding = (padding, padding)
+        elif padding is None:
+            padding = kernel_size 
+        stride = stride if isinstance(stride, tuple) else (stride, stride)
+        return Maxpool2d.apply(self, kernel_size, padding, stride)
 
     def backward(self, grad_output : Optional[np.ndarray] = None) -> None:
         if grad_output is None:
