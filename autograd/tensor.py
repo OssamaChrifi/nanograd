@@ -73,6 +73,10 @@ class Tensor:
     def __repr__(self) -> str:
         return f"Tensor({self.data}, requires_grad={self.requires_grad})"
     
+    @property
+    def shape(self):
+        return self.data.shape
+    
     def sum(self) -> 'Tensor':
         return Sum.apply(self)
     
@@ -107,7 +111,7 @@ class Tensor:
                 self.grad = np.zeros_like(self.data, dtype=float)
             self.grad = self.grad + grad_output
         if self._ctx is not None:
-            grads_input = self._ctx.backward(grad_output)
+            grads_input = self._ctx.backward(self.grad)
             try:
                 for tensor, grad in zip(self._ctx.input, grads_input):
                     tensor.backward(grad)
