@@ -1,7 +1,8 @@
 import numpy as np
 from typing import Optional, Tuple, Union
 from .functions import Add, Sub, Mul, Div, Pow, MatMul, \
-    Sum, Mean, Exp, Log, Conv2d, Maxpool2d
+    Sum, Mean, Exp, Log, Abs, Conv2d, Maxpool2d, \
+        ReLU, Sigmoid, Tanh, Softmax
 
 class Tensor:
     """
@@ -77,17 +78,32 @@ class Tensor:
     def shape(self):
         return self.data.shape
     
-    def sum(self) -> 'Tensor':
+    def sum(self)-> 'Tensor':
         return Sum.apply(self)
     
-    def mean(self) -> 'Tensor':
+    def mean(self)-> 'Tensor':
         return Mean.apply(self)
     
-    def exp(self) -> 'Tensor':
+    def exp(self)-> 'Tensor':
         return Exp.apply(self)
     
-    def log(self) -> 'Tensor':
+    def log(self)-> 'Tensor':
         return Log.apply(self)
+    
+    def abs(self)-> 'Tensor':
+        return Abs.apply(self)
+    
+    def reLU(self)-> 'Tensor':
+        return ReLU.apply(self)
+    
+    def sigmoide(self)-> 'Tensor':
+        return Sigmoid.apply(self)
+    
+    def tanh(self)-> 'Tensor':
+        return Tanh.apply(self)
+    
+    def softmax(self)-> 'Tensor':
+        return Softmax.apply(self)
     
     def conv2d(self, weight : 'Tensor', bias : 'Tensor', padding : int = 0, stride : int = 1, \
                dilation : int = 1, groups : int = 1, padding_mode: str = 'zeros') -> 'Tensor':

@@ -29,3 +29,12 @@ class Tanh(Function):
     def backward(self, grad_output: Optional[np.ndarray]) -> np.ndarray:
         x = self.input
         return grad_output * (1 - np.tanh(x.data) ** 2)
+    
+class Softmax(Function):
+    def forward(self, x) -> np.ndarray:
+        self.input = x
+        return np.exp(x.data) / np.exp(x.data).sum()
+    def backward(self, grad_output: Optional[np.ndarray]) -> np.ndarray:
+        x = self.input
+        return grad_output * \
+            ((x.data * np.exp(x.data) * np.exp(x.data).sum()) / (np.exp(x.data) * np.ones_like(x.shape)))

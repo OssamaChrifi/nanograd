@@ -71,7 +71,7 @@ class MatMul(Function):
 class Sum(Function):
     def forward(self, x) -> np.ndarray:
         self.input = x
-        return np.array([x.data.sum()])
+        return x.data.sum()
     
     def backward(self, grad_output : Optional[np.ndarray]) -> np.ndarray:
         x = self.input
@@ -80,7 +80,7 @@ class Sum(Function):
 class Mean(Function):
     def forward(self, x) -> np.ndarray:
         self.input = x
-        return np.array([x.data.mean()])
+        return x.data.mean()
     
     def backward(self, grad_output : Optional[np.ndarray]) -> np.ndarray:
         x = self.input
@@ -103,6 +103,15 @@ class Log(Function):
     def backward(self, grad_output : Optional[np.ndarray]) -> np.ndarray:
         x = self.input
         return grad_output / x.data
+    
+class Abs(Function):
+    def forward(self, x) -> np.ndarray:
+        self.input = x
+        return x.data if x.data > 0 else -x.data
+    
+    def backward(self, grad_output: Optional[np.ndarray]) -> np.ndarray:
+        x = self.input
+        return grad_output if x.data > 0 else -grad_output
 
 class Conv2d(Function):
     def forward(self, x, weight, bias, padding, stride, dilation, groups, padding_mode) -> np.ndarray:
