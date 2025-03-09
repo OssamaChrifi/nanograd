@@ -1,5 +1,5 @@
 from .tensor import Tensor
-from .modules import Linear, Conv2d, MaxPool2d
+from .modules import Linear, Conv2d, MaxPool2d, Sequential
 from .functions import ReLU, Sigmoid, Tanh
 from .optim import SGD
 

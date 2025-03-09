@@ -11,10 +11,10 @@ class MAE(Module):
         return (x - y).abs()
     
 class Cross_Entropie(Module):
-    def forward(self, x: Tensor, y: Tensor):
+    def forward(self, x: Tensor, y: Tensor)-> Tensor:
         x_proba = x.softmax()
         class_x_proba = Tensor(x_proba.data[np.arange(y.shape[0]), y.data])
-        return -class_x_proba.log()
+        return -1 * class_x_proba.log()
 
 
         

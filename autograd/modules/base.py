@@ -6,5 +6,6 @@ class Module:
     def forward(self, *args, **kwargs):
         raise NotImplementedError
     
+    @property
     def parameters(self):
         return []
