@@ -16,3 +16,7 @@ class Tanh(Module):
 class Softmax(Module):
     def forward(self, x: Tensor) -> Tensor:
         return x.softmax()
+    
+class LogSoftmax(Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return x.logSoftmax()

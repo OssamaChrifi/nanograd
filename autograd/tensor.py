@@ -1,8 +1,6 @@
 import numpy as np
 from typing import Optional, Tuple, Union
-from .functions import Add, Sub, Mul, Div, Pow, MatMul, \
-    Sum, Mean, Exp, Log, Abs, Conv2d, Maxpool2d, \
-        ReLU, Sigmoid, Tanh, Softmax
+from .functions import *
 
 class Tensor:
     """
@@ -10,7 +8,7 @@ class Tensor:
     """
     def __init__(self, 
                  data : np.ndarray, 
-                 requires_grad : bool = True):
+                 requires_grad : bool = False):
         self.data = data if isinstance(data, np.ndarray) else np.array(data)
         self.grad = np.zeros_like(data, dtype=float) if requires_grad else None
         self.requires_grad = requires_grad
@@ -66,7 +64,7 @@ class Tensor:
             other = Tensor(other)
         return Div.apply(self, other)
 
-    def __pow__(self, other : 'Tensor') -> 'Tensor':
+    def __rpow__(self, other : 'Tensor') -> 'Tensor':
         if not isinstance(other, Tensor):
             other = Tensor(other)
         return Pow.apply(self, other)
@@ -93,6 +91,9 @@ class Tensor:
     def abs(self)-> 'Tensor':
         return Abs.apply(self)
     
+    def flatten(self)-> 'Tensor':
+        return Flatten.apply(self)
+    
     def reLU(self)-> 'Tensor':
         return ReLU.apply(self)
     
@@ -105,18 +106,18 @@ class Tensor:
     def softmax(self)-> 'Tensor':
         return Softmax.apply(self)
     
+    def logSoftmax(self)-> 'Tensor':
+        return Log.apply(Softmax.apply(self))
+
+    def crossEntropyLoss(self, y : 'Tensor')-> 'Tensor':
+        return CrossEntropyLoss.apply(self, y)
+    
     def conv2d(self, weight : 'Tensor', bias : 'Tensor', padding : int = 0, stride : int = 1, \
                dilation : int = 1, groups : int = 1, padding_mode: str = 'zeros') -> 'Tensor':
         return Conv2d.apply(self, weight, bias, padding, stride, dilation, groups, padding_mode)
     
     def maxPool2d(self, kernel_size: Union[Tuple[int, int], int], padding: Union[Tuple[int, int], int] = None, \
                   stride: Union[Tuple[int, int], int] = (1, 1)) -> 'Tensor':
-        kernel_size = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
-        if isinstance(padding, int):
-            padding = (padding, padding)
-        elif padding is None:
-            padding = kernel_size 
-        stride = stride if isinstance(stride, tuple) else (stride, stride)
         return Maxpool2d.apply(self, kernel_size, padding, stride)
 
     def backward(self, grad_output : Optional[np.ndarray] = None) -> None:

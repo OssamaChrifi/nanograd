@@ -4,4 +4,5 @@ from .maxpool2d import MaxPool2d
 from .loss import *
 from .activation import *
 from .sequential import Sequential
+from .flatten import Flatten
 

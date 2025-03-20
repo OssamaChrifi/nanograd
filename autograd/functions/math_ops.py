@@ -112,6 +112,35 @@ class Abs(Function):
     def backward(self, grad_output: Optional[np.ndarray]) -> np.ndarray:
         x = self.input
         return grad_output if x.data > 0 else -grad_output
+    
+class CrossEntropyLoss(Function):
+    def forward(self, x, y) -> np.ndarray:
+        self.input = (x, y)
+        logits = x.data
+        labels = y.data
+        logits_stable = logits - np.max(logits, axis=1, keepdims=True)
+        exp_logits = np.exp(logits_stable)
+        self.probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+        self.labels = labels
+        batch_size = logits.shape[0]
+        correct_probs = self.probs[np.arange(batch_size), labels]
+        loss = -np.log(correct_probs).mean()
+        return loss
+    
+    def backward(self, grad_output: Optional[np.ndarray]) -> Tuple[np.ndarray, np.ndarray]:
+        batch_size, _ = self.probs.shape
+        one_hot = np.zeros_like(self.probs)
+        one_hot[np.arange(batch_size), self.labels] = 1
+        grad = (self.probs - one_hot) / batch_size
+        return grad_output * grad, None
+
+class Flatten(Function):
+    def forward(self, x) -> np.ndarray:
+        self.input = x
+        return x.data.reshape(x.shape[0], -1)
+    
+    def backward(self, grad_output: Optional[np.ndarray]) -> np.ndarray:
+        return grad_output.reshape(self.input.shape)
 
 class Conv2d(Function):
     def forward(self, x, weight, bias, padding, stride, dilation, groups, padding_mode) -> np.ndarray:
